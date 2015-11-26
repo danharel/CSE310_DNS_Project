@@ -57,9 +57,10 @@ class DNSClient(cmd.Cmd):
 
         print "Hello"
 
-        self.hostname = hostname
-        self.portnumber = portnumber
-        self.sock = socket(AF_INET, SOCK_DGRAM)
+        self.sock = socket(AF_INET, SOCK_STREAM)
+        self.sock.connect((hostname, portnumber))
+
+        self.sock.sendall("Hello")
 
         print "Done making socket"
 
