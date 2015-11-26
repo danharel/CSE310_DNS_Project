@@ -45,20 +45,11 @@ def main(argv):
 
     DNSClient(args.hostname, args.portnumber).cmdloop()
 
-    #sock = socket(AF_INET, SOCK_DGRAM)
-
-    # while True:
-    #     usr_input = raw_input("Please enter a command: ")
-
-    #     command = process_input(usr_input, sock)
-
-    #     #sock.sendto(command, (args.hostname, args.portnumber))
-
-    #     if command == 'exit client':
-    #         break
-
+# Class that handles command line interfacing with the program
 class DNSClient(cmd.Cmd):
+    # Introductory message
     intro = 'Please enter a command, or help for usage instructions.'
+    # Prompt that appears before every input
     prompt = '> '
 
     def __init__(self, hostname, portnumber):
@@ -72,12 +63,16 @@ class DNSClient(cmd.Cmd):
 
         print "Done making socket"
 
+    # Runs before every command is processed.
+    # Strips the whitespace off the ends of the string, then makes it lowercase
     def precmd(self, line):
         return line.strip().lower()
 
+    # Prints help string
     def do_help(self, args):
         print HELP_STR
 
+    # Puts an entry into the database
     def do_put(self, args):
         parts = args.split(' ')
         if len(parts) != 3:
@@ -86,6 +81,7 @@ class DNSClient(cmd.Cmd):
         else:
             print "Putting"
 
+    # Gets an entry from the database
     def do_get(self, args):
         parts = args.split(' ')
         if len(parts) != 2:
@@ -94,6 +90,7 @@ class DNSClient(cmd.Cmd):
         else:
             print "Getting"
 
+    # Deletes an entry from the database
     def do_del(self, args):
         parts = args.split(' ')
         if len(parts) != 2:
@@ -102,15 +99,19 @@ class DNSClient(cmd.Cmd):
         else:
             print "Deleting"
 
+    # Prints out all entries
     def do_browse(self, args):
         print "Browsing"
 
+    # Exits the client
     def do_exit(self, args):
         return True
 
+    # Prints out the help string if none of the above commands are entered
     def do_default(self, args):
         print HELP_STR
 
+    # Cleans up at the end of the loop
     def postloop(self):
         print "Exiting..."
         self.sock.close()
