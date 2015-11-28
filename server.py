@@ -1,27 +1,31 @@
-from socket import *
+import threading
+import SocketServer
 
-# Assign the ephemeral port to the server
-serverPort = 0
+server = None
+
+class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
+    def handle(self):
+        data = self.request.recv(1024);
+        print "Received data: {}".format(data)
+        if data == 'exit server':
+            print "Exiting..."
+            server.shutdown()
+            server.server_close()
+
+class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
+    pass
 
 def main():
-    serverSocket = socket(AF_INET, SOCK_STREAM)
-    serverSocket.bind(('', serverPort))
-    serverSocket.listen(1)
+    # Assign the ephemeral port to the server
+    HOST, PORT = '', 0
 
-    print "Server started with address %s and port %d" % serverSocket.getsockname()
-    print serverSocket.getsockname()
+    server = ThreadedTCPServer((HOST, PORT), ThreadedTCPRequestHandler)
 
-    while True:
-        print 'Ready to serve...'
-        connectionSocket, addr = serverSocket.accept()
-        data = connectionSocket.recv(1024)
-        print "Received data: " + data
+    server_thread = threading.Thread(target=server.serve_forever)
+    server_thread.start()
 
-        if data == 'exit server':
-            break
-
-    print "Exiting..."
-    serverSocket.close()
+    print "Server started with address %s and port %d" % server.server_address
+    print "Ready to serve..."
 
 if __name__ == '__main__':
     main()
