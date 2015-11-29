@@ -26,6 +26,12 @@ HELP_STR += '        Prints out all records in the database or "database is empt
 HELP_STR += '    exit\n'
 HELP_STR += '        Exits this program.\n'
 
+PROTOCOL = "DNS/1.0"
+OK = "200"
+CREATED = "201"
+BAD_REQUEST = "400"
+NOT_FOUND = "404"
+SERVICE_UNAVAILABLE = "503"
 
 def main(argv):
     parser = argparse.ArgumentParser()
@@ -80,10 +86,21 @@ class DNSClient(cmd.Cmd):
             print 'Invalid format'
             print PUT_USAGE_STR
         else:
-            message = "DNS/1.0 PUT " + parts[0] + " " + parts[1] + " " + parts[2]
+            message = PROTOCOL + " PUT " + parts[0] + " " + parts[1] + " " + parts[2]
             self.sock.sendall(message)
-            # TODO receive response
-            print "Putting"
+            lines = self.receive_data()
+            response = lines[0].split(" ")
+            if len(response) < 3 or response[0] != PROTOCOL:
+                # Invalid response
+                print "Invalid response."
+                return
+            response_code = response[1]
+            if response_code == CREATED:
+                print "PUT successful."
+            elif response_code == BAD_REQUEST:
+                print "Invalid PUT request."
+            elif response_code == SERVICE_UNAVAILABLE:
+                print "Server was unable to process PUT. Please try again later."
 
     # Gets an entry from the database
     def do_get(self, args):
@@ -92,8 +109,23 @@ class DNSClient(cmd.Cmd):
             print 'Invalid format'
             print GET_USAGE_STR
         else:
-            message = "DNS/1.0 GET " + parts[0] + " " + parts[1]
-            print "Getting"
+            message = PROTOCOL + " GET " + parts[0] + " " + parts[1]
+            self.sock.sendall(message)
+            lines = self.receive_data()
+            response = lines[0].split(" ")
+            if len(response) < 3 or response[0] != PROTOCOL:
+                # Invalid response
+                print "Invalid response."
+                return
+            response_code = response[1]
+            if response_code == OK:
+                print lines[1].strip()
+            elif response_code == NOT_FOUND:
+                print "Record not found."
+            elif response_code == BAD_REQUEST:
+                print "Invalid GET request."
+            elif response_code == SERVICE_UNAVAILABLE:
+                print "Server was unable to process GET. Please try again later."
 
     # Deletes an entry from the database
     def do_del(self, args):
@@ -102,17 +134,30 @@ class DNSClient(cmd.Cmd):
             print 'Invalid format'
             print "Deleting"
         else:
-            message = "DNS/1.0 DELETE " + parts[0] + " " + parts[1]
-            self.sock.sendall(message);
+            message = PROTOCOL + " DELETE " + parts[0] + " " + parts[1]
+            self.sock.sendall(message)
             # TODO receive response
             print "Deleting"
 
     # Prints out all entries
     def do_browse(self, args):
-        message = "DNS/1.0 BROWSE"
+        message = PROTOCOL + " BROWSE"
         self.sock.sendall(message)
-        # TODO receive response
-        print "Browsing"
+        lines = self.receive_data()
+        response = lines[0].split(" ")
+        if len(response) < 3 or response[0] != PROTOCOL:
+            # Invalid response
+            print lines
+            print "Invalid response."
+            return
+        response_code = response[1]
+        if response_code == OK:
+            for i in range(1, len(response)):
+                print lines[i].strip()
+        elif response_code == BAD_REQUEST:
+            print "Invalid BROWSE request."
+        elif response_code == SERVICE_UNAVAILABLE:
+            print "Server was unable to process BROWSE. Please try again later."
 
     # Exits the client
     def do_exit(self, args):
@@ -126,6 +171,17 @@ class DNSClient(cmd.Cmd):
     def postloop(self):
         print "Exiting..."
         self.sock.close()
+
+    def receive_data(self):
+        data = ""
+        buffer = self.sock.recv(1024)
+        while(buffer):
+            if buffer != "":
+                data += buffer
+            if data.endswith("\r\n\r\n"):
+                break
+            buffer = self.sock.recv(1024)
+        return data.split("\r\n")
 
 if __name__ == '__main__':
     main(argv[1:])
