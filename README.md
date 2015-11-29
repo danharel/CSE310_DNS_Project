@@ -1,8 +1,6 @@
 # CSE310_DNS_Project
 
 ## Known Issues
-* client.py
- * `browse` only displays the first two records.
 
 ## Storage
 

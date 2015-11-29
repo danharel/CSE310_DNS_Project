@@ -168,7 +168,7 @@ class DNSClient(cmd.Cmd):
             return
         response_code = response[1]
         if response_code == OK:
-            for i in range(1, len(response)):
+            for i in xrange(1, len(lines)):
                 print lines[i].strip()
         elif response_code == BAD_REQUEST:
             print "Invalid BROWSE request."
@@ -198,7 +198,8 @@ class DNSClient(cmd.Cmd):
                     leading_whitespace = False
             if not leading_whitespace:
                 data += buffer
-        return data.split("\r\n")
+        lines = data.split("\r\n")
+        return lines[:len(lines) - 2]   # Remove the trailing blank lines
 
 if __name__ == '__main__':
     main(argv[1:])
