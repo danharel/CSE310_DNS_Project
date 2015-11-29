@@ -80,6 +80,9 @@ class DNSClient(cmd.Cmd):
             print 'Invalid format'
             print PUT_USAGE_STR
         else:
+            message = "DNS/1.0 PUT " + parts[0] + " " + parts[1] + " " + parts[2]
+            self.sock.sendall(message)
+            # TODO receive response
             print "Putting"
 
     # Gets an entry from the database
@@ -89,6 +92,7 @@ class DNSClient(cmd.Cmd):
             print 'Invalid format'
             print GET_USAGE_STR
         else:
+            message = "DNS/1.0 GET " + parts[0] + " " + parts[1]
             print "Getting"
 
     # Deletes an entry from the database
@@ -98,10 +102,16 @@ class DNSClient(cmd.Cmd):
             print 'Invalid format'
             print "Deleting"
         else:
+            message = "DNS/1.0 DELETE " + parts[0] + " " + parts[1]
+            self.sock.sendall(message);
+            # TODO receive response
             print "Deleting"
 
     # Prints out all entries
     def do_browse(self, args):
+        message = "DNS/1.0 BROWSE"
+        self.sock.sendall(message)
+        # TODO receive response
         print "Browsing"
 
     # Exits the client
