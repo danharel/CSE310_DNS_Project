@@ -92,6 +92,7 @@ class DNSClient(cmd.Cmd):
             response = lines[0].split(" ")
             if len(response) < 3 or response[0] != PROTOCOL:
                 # Invalid response
+                print lines
                 print "Invalid response."
                 return
             response_code = response[1]
@@ -115,6 +116,7 @@ class DNSClient(cmd.Cmd):
             response = lines[0].split(" ")
             if len(response) < 3 or response[0] != PROTOCOL:
                 # Invalid response
+                print lines
                 print "Invalid response."
                 return
             response_code = response[1]
@@ -136,8 +138,22 @@ class DNSClient(cmd.Cmd):
         else:
             message = PROTOCOL + " DELETE " + parts[0] + " " + parts[1]
             self.sock.sendall(message)
-            # TODO receive response
-            print "Deleting"
+            lines = self.receive_data()
+            response = lines[0].split(" ")
+            if len(response) < 3 or response[0] != PROTOCOL:
+                # Invalid response
+                print lines
+                print "Invalid response."
+                return
+            response_code = response[1]
+            if response_code == OK:
+                print "Record deleted."
+            elif response_code == NOT_FOUND:
+                print "Record not found."
+            elif response_code == BAD_REQUEST:
+                print "Invalid DELETE request."
+            elif response_code == SERVICE_UNAVAILABLE:
+                print "Server was unable to process DELETE. Please try again later."
 
     # Prints out all entries
     def do_browse(self, args):
@@ -174,13 +190,14 @@ class DNSClient(cmd.Cmd):
 
     def receive_data(self):
         data = ""
-        buffer = self.sock.recv(1024)
-        while(buffer):
-            if buffer != "":
-                data += buffer
-            if data.endswith("\r\n\r\n"):
-                break
+        leading_whitespace = True   # Used to ignore leading whitespace
+        while(not data.endswith("\r\n\r\n")):
             buffer = self.sock.recv(1024)
+            if leading_whitespace:
+                if buffer.strip() != "":
+                    leading_whitespace = False
+            if not leading_whitespace:
+                data += buffer
         return data.split("\r\n")
 
 if __name__ == '__main__':

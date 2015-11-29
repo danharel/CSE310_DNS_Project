@@ -23,7 +23,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
 
             bad_request = False
 
-            parts = data.split(" ")
+            parts = data.strip().split(" ")
             # Valid requests are in the following format:
             #     DNS/1.0 METHOD name type value
             if len(parts) <= 1:
@@ -43,6 +43,8 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                                         file.seek(0)
                                         for i in xrange(0, len(unmatching)):
                                             file.write(unmatching[i])
+                                        file.truncate()
+                                        self.request.sendall(OK_STR)
                                     else:
                                         self.request.sendall(NOT_FOUND_STR)
                             except IOError:
@@ -67,6 +69,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                                         for i in xrange(0, len(unmatching)):
                                             file.write(unmatching[i])
                                     file.write(parts[2] + " " + parts[3] + " " + parts[4] + "\r\n")
+                                    file.truncate()
                                 self.request.sendall(CREATED_STR)
                             except IOError:
                                 # Unable to open file
@@ -76,6 +79,8 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                             try:
                                 with open(FILE_NAME, "w") as file:
                                     file.write(parts[2] + " " + parts[3] + " " + parts[4] + "\r\n")
+                                    file.truncate()
+                                self.request.sendall(CREATED_STR)
                             except IOError:
                                 # Unable to create file
                                 self.request.sendall(SERVICE_UNAVAILABLE_STR)
@@ -135,7 +140,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
         for line in file:
             record = line.rstrip("\r\n").split(" ")
             if len(record) == 3:
-                # Ignore invalid records
+                # Return only valid records.
                 match = True
                 if filter_name and record[0] != filter_name:
                     match = False
@@ -146,6 +151,9 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                     matched_list.append(line)
                 else:
                     unmatched_list.append(line)
+        print "Filter:"
+        print matched_list
+        print unmatched_list
         return (matched_list, unmatched_list)
 
 class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):

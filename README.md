@@ -1,10 +1,8 @@
 # CSE310_DNS_Project
 
 ## Known Issues
-* The first response is always interpreted as invalid.
-
-## TODO
-* Finish implementing client.py
+* client.py
+ * `browse` only displays the first two records.
 
 ## Storage
 
