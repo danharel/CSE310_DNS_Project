@@ -1,6 +1,11 @@
 # CSE310_DNS_Project
 
+## TODO
+* Part 2
+* Documentation
+
 ## Known Issues
+* None
 
 ## Storage
 

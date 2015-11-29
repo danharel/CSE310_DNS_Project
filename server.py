@@ -3,7 +3,7 @@ import SocketServer
 import threading
 
 FILE_NAME = "records.txt"
-lock = threading.RLock()
+file_io_lock = threading.RLock()
 
 OK_STR = "DNS/1.0 200 OK\r\n"
 CREATED_STR = "DNS/1.0 201 Created\r\n"
@@ -33,7 +33,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                     if len(parts) <= 3:
                         self.request.sendall(BAD_REQUEST_STR)
                     else:
-                        lock.acquire()  # Prevent simultaneous access to records file.
+                        file_io_lock.acquire()  # Prevent simultaneous access to records file.
                         if os.path.isfile(FILE_NAME):
                             try:
                                 with open(FILE_NAME, "r+") as file:
@@ -52,13 +52,13 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                                 self.request.sendall(SERVICE_UNAVAILABLE_STR)
                         else:
                             self.request.sendall(NOT_FOUND_STR)
-                        lock.release()
+                        file_io_lock.release()
 
                 elif parts[1] == "PUT":
                     if len(parts) <= 4:
                         self.request.sendall(BAD_REQUEST_STR)
                     else:
-                        lock.acquire()  # Prevent simultaneous access to records file.
+                        file_io_lock.acquire()  # Prevent simultaneous access to records file.
                         if os.path.isfile(FILE_NAME):
                             try:
                                 with open(FILE_NAME, "r+") as file:
@@ -84,13 +84,13 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                             except IOError:
                                 # Unable to create file
                                 self.request.sendall(SERVICE_UNAVAILABLE_STR)
-                        lock.release()
+                        file_io_lock.release()
 
                 elif parts[1] == "GET":
                     if len(parts) <= 3:
                         self.request.sendall(BAD_REQUEST_STR)
                     else:
-                        lock.acquire()  # Prevent simultaneous access to records file.
+                        file_io_lock.acquire()  # Prevent simultaneous access to records file.
                         if os.path.isfile(FILE_NAME):
                             try:
                                 matching, unmatching = None, None
@@ -106,10 +106,10 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                                 self.request.sendall(SERVICE_UNAVAILABLE_STR)
                         else:
                             self.request.sendall(OK_STR)
-                        lock.release()
+                        file_io_lock.release()
 
                 elif parts[1] == "BROWSE":
-                    lock.acquire()  # Prevent simultaneous access to records file.
+                    file_io_lock.acquire()  # Prevent simultaneous access to records file.
                     if os.path.isfile(FILE_NAME):
                         try:
                             matching, unmatching = None, None
@@ -123,7 +123,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                             self.request.sendall(SERVICE_UNAVAILABLE_STR)
                     else:
                         self.request.sendall(OK_STR)
-                    lock.release()
+                    file_io_lock.release()
 
                 else:
                     self.request.sendall(BAD_REQUEST_STR)
@@ -165,7 +165,6 @@ def main():
     # Assign the ephemeral port to the server
     HOST, PORT = '', 0
 
-    print type(lock)
     server = ThreadedTCPServer((HOST, PORT), ThreadedTCPRequestHandler)
 
     server_thread = threading.Thread(target=server.serve_forever)
