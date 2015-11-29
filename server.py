@@ -134,9 +134,14 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
             data = self.request.recv(1024)
         # Client has closed the socket
 
+    # Reads the record file line by line and returns the tuple (matching, unmatching)
+    #   where matching is an array of record strings that match the filter and
+    #   unmatching is an array of record strings that do not match the filter.
+    # If no filter is given, then all record strings will be placed into matching
+    #   and unmatching will by empty.
     def filter_file(self, file, filter_name=None, filter_type=None):
-        matched_list = []
-        unmatched_list = []
+        matching = []
+        unmatching = []
         for line in file:
             record = line.rstrip("\r\n").split(" ")
             if len(record) == 3:
@@ -148,13 +153,10 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                     match = False
 
                 if match:
-                    matched_list.append(line)
+                    matching.append(line)
                 else:
-                    unmatched_list.append(line)
-        print "Filter:"
-        print matched_list
-        print unmatched_list
-        return (matched_list, unmatched_list)
+                    unmatching.append(line)
+        return (matching, unmatching)
 
 class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
     pass

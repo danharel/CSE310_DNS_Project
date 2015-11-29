@@ -56,7 +56,7 @@ class DNSClient(cmd.Cmd):
     # Introductory message
     intro = 'Please enter a command, or help for usage instructions.'
     # Prompt that appears before every input
-    prompt = '> '
+    prompt = '\n> '
 
     def __init__(self, hostname, portnumber):
         cmd.Cmd.__init__(self)
@@ -88,12 +88,8 @@ class DNSClient(cmd.Cmd):
         else:
             message = PROTOCOL + " PUT " + parts[0] + " " + parts[1] + " " + parts[2]
             self.sock.sendall(message)
-            lines = self.receive_data()
-            response = lines[0].split(" ")
-            if len(response) < 3 or response[0] != PROTOCOL:
-                # Invalid response
-                print lines
-                print "Invalid response."
+            response, lines = self.receive_response()
+            if not self.validate_response(response):
                 return
             response_code = response[1]
             if response_code == CREATED:
@@ -112,15 +108,12 @@ class DNSClient(cmd.Cmd):
         else:
             message = PROTOCOL + " GET " + parts[0] + " " + parts[1]
             self.sock.sendall(message)
-            lines = self.receive_data()
-            response = lines[0].split(" ")
-            if len(response) < 3 or response[0] != PROTOCOL:
-                # Invalid response
-                print lines
-                print "Invalid response."
+            response, lines = self.receive_response()
+            if not self.validate_response(response):
                 return
             response_code = response[1]
             if response_code == OK:
+                print "Name Type Value"
                 print lines[1].strip()
             elif response_code == NOT_FOUND:
                 print "Record not found."
@@ -138,12 +131,8 @@ class DNSClient(cmd.Cmd):
         else:
             message = PROTOCOL + " DELETE " + parts[0] + " " + parts[1]
             self.sock.sendall(message)
-            lines = self.receive_data()
-            response = lines[0].split(" ")
-            if len(response) < 3 or response[0] != PROTOCOL:
-                # Invalid response
-                print lines
-                print "Invalid response."
+            response, lines = self.receive_response()
+            if not self.validate_response(response):
                 return
             response_code = response[1]
             if response_code == OK:
@@ -159,15 +148,12 @@ class DNSClient(cmd.Cmd):
     def do_browse(self, args):
         message = PROTOCOL + " BROWSE"
         self.sock.sendall(message)
-        lines = self.receive_data()
-        response = lines[0].split(" ")
-        if len(response) < 3 or response[0] != PROTOCOL:
-            # Invalid response
-            print lines
-            print "Invalid response."
+        response, lines = self.receive_response()
+        if not self.validate_response(response):
             return
         response_code = response[1]
         if response_code == OK:
+            print "Name Type Value"
             for i in xrange(1, len(lines)):
                 print lines[i].strip()
         elif response_code == BAD_REQUEST:
@@ -179,7 +165,7 @@ class DNSClient(cmd.Cmd):
     def do_exit(self, args):
         return True
 
-    # Prints out the help string if none of the above commands are entered
+    # Prints out the help string if none of the above commands are entered.
     def do_default(self, args):
         print HELP_STR
 
@@ -188,7 +174,9 @@ class DNSClient(cmd.Cmd):
         print "Exiting..."
         self.sock.close()
 
-    def receive_data(self):
+    # Reads from socket until the string "\r\n\r\n" is reached.
+    # Returns a tuple (response, body).
+    def receive_response(self):
         data = ""
         leading_whitespace = True   # Used to ignore leading whitespace
         while(not data.endswith("\r\n\r\n")):
@@ -199,7 +187,26 @@ class DNSClient(cmd.Cmd):
             if not leading_whitespace:
                 data += buffer
         lines = data.split("\r\n")
-        return lines[:len(lines) - 2]   # Remove the trailing blank lines
+        lines = lines[:len(lines) - 2] # Remove trailing blank lines
+        response = lines[0].split(" ")
+        body = []
+        if len(lines) > 1:
+            body = lines[0:]
+        return (response, body)
+
+    # Checks if the given response is valid.
+    # The response is valid if it is using the DNS/1.0 protocol
+    #   and contains the protocol, status code, and status phrase.
+    # If the response is not valid, this funciton also prints the response
+    #   and the string "Incalid response."
+    def validate_response(self, response):
+        if len(response) < 3 or response[0] != PROTOCOL:
+            # Invalid response
+            print lines
+            print "Invalid response."
+            return False
+        else:
+            return True
 
 if __name__ == '__main__':
     main(argv[1:])
