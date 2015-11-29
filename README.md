@@ -24,8 +24,8 @@ Valid Methods:
 ```
 DNS/1.0 StatusCode StatusPhrase\r\n
 \r\n
-name1 type1 value1
-name2 type2 value2
+name1 type1 value1\r\n
+name2 type2 value2\r\n
 ...
 ```
 
