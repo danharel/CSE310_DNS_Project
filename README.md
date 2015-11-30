@@ -37,6 +37,8 @@ Valid Methods:
 * BROWSE
  * Does not require any other fields.
 
+Requests must be under 1024 bytes in length.
+
 ### Response Format
 
 ```
