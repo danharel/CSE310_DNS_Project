@@ -220,6 +220,10 @@ class DNSClient(cmd.Cmd):
                 print "Server was unable to process TYPE. Please try again later."
 
     def do_done(self, args):
+        if !self.connected_to_nameserver:
+            print NOT_CONNECTED_STR
+            return
+
         self.sock.close()
         self.sock = self.manager_sock
 
@@ -229,6 +233,9 @@ class DNSClient(cmd.Cmd):
 
     # Exits the client
     def do_exit(self, args):
+        self.manager_sock.close()
+        if self.connected_to_nameserver:
+            self.sock.close()
         return True
 
     # Prints out the help string if none of the above commands are entered.
