@@ -3,8 +3,13 @@ import argparse
 from sys import argv
 import cmd
 
+HOSTNAME = '127.0.0.1'
+PORT = 4254 + 5000
+
 HELP = 'HELP'
 ERROR_STR = "ERROR"
+
+NOT_CONNECTED_STR = "Not connected to a name server. Please enter the type of the server you'd like to connect to."
 
 PUT_USAGE_STR = '    put <name> <value> <type>\n'
 GET_USAGE_STR = '    get <name> <type>\n'
@@ -63,10 +68,14 @@ class DNSClient(cmd.Cmd):
 
         print "Hello"
 
+        self.connected_to_nameserver = False
+
         self.sock = socket(AF_INET, SOCK_STREAM)
         self.sock.connect((hostname, portnumber))
 
         self.sock.sendall("Hello")
+
+        self.manager_sock = self.sock
 
         print "Done making socket"
 
@@ -81,11 +90,16 @@ class DNSClient(cmd.Cmd):
 
     # Puts an entry into the database
     def do_put(self, args):
+        if not self.connected_to_nameserver:
+            print NOT_CONNECTED_STR
+            return
+
         parts = args.split(' ')
         if len(parts) != 3:
             print 'Invalid format'
             print PUT_USAGE_STR
         else:
+            #message = '%s PUT %s %s %s' % (PROTOCOL, parts[0], parts[1], parts[2])
             message = PROTOCOL + " PUT " + parts[0] + " " + parts[1] + " " + parts[2]
             self.sock.sendall(message)
             response, lines = self.receive_response()
@@ -101,6 +115,10 @@ class DNSClient(cmd.Cmd):
 
     # Gets an entry from the database
     def do_get(self, args):
+        if not self.connected_to_nameserver:
+            print NOT_CONNECTED_STR
+            return
+
         parts = args.split(' ')
         if len(parts) != 2:
             print 'Invalid format'
@@ -124,10 +142,14 @@ class DNSClient(cmd.Cmd):
 
     # Deletes an entry from the database
     def do_del(self, args):
+        if not self.connected_to_nameserver:
+            print NOT_CONNECTED_STR
+            return
+
         parts = args.split(' ')
         if len(parts) != 2:
             print 'Invalid format'
-            print "Deleting"
+            print DEL_USAGE_STR
         else:
             message = PROTOCOL + " DELETE " + parts[0] + " " + parts[1]
             self.sock.sendall(message)
@@ -146,6 +168,10 @@ class DNSClient(cmd.Cmd):
 
     # Prints out all entries
     def do_browse(self, args):
+        if not self.connected_to_nameserver:
+            print NOT_CONNECTED_STR
+            return
+
         message = PROTOCOL + " BROWSE"
         self.sock.sendall(message)
         response, lines = self.receive_response()
@@ -160,6 +186,46 @@ class DNSClient(cmd.Cmd):
             print "Invalid BROWSE request."
         elif response_code == SERVICE_UNAVAILABLE:
             print "Server was unable to process BROWSE. Please try again later."
+
+    def do_type(self, args):
+        if self.connected_to_nameserver:
+            print 'You are already connected to a name server. Type "done" if you are done with this type.'
+            return
+
+        parts = args.split(' ')
+        if len(parts) != 1:
+            print 'Invalid format'
+            print TYPE_USAGE_STR
+        else:
+            message = 'PROTOCOL + " PUT " + parts[0] + " " + parts[1] + " " + parts[2]'
+            message = '%s TYPE %s' % (PROTOCOL, parts[0],)
+            self.sock.sendall(message)
+            response, lines = self.receive_response()
+            if not self.validate_response(response):
+                return
+            response_code = response[1]
+            if response_code == OK:
+                lines = lines.split(' ')
+                connected = self.connect_to_nameserver(lines[0], lines[1])
+                if connected:
+                    print "Connection established with %s nameserver" % (parts[0],)
+                    self.connected_to_nameserver = True
+                else:
+                    print "Unable to connect to nameserver. Please try again."
+            elif response_code == BAD_REQUEST:
+                print "Invalid TYPE request."
+            elif response_code == NOT_FOUND:
+                print "Name server not found."
+            elif response_code == SERVICE_UNAVAILABLE:
+                print "Server was unable to process TYPE. Please try again later."
+
+    def do_done(self, args):
+        self.sock.close()
+        self.sock = self.manager_sock
+
+        print "Connection with nameserver has been closed."
+
+        self.connected_to_nameserver = False
 
     # Exits the client
     def do_exit(self, args):
@@ -207,6 +273,16 @@ class DNSClient(cmd.Cmd):
             return False
         else:
             return True
+
+    def connect_to_nameserver(self, host, port):
+        try:
+            self.sock = socket(AF_INET, SOCK_STREAM)
+            self.sock.connect((host, port))
+
+            return True
+        except Exception as e:
+            print e
+            return False
 
 if __name__ == '__main__':
     main(argv[1:])
