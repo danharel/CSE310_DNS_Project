@@ -69,7 +69,7 @@ def main():
 
     if success:
         # Assign the ephemeral port to the server
-        HOST, PORT = ip_address.get(), 4254
+        HOST, PORT = ip_address.get(), 9254
 
         server = ThreadedTCPServer((HOST, PORT), ManagerRequestHandler)
 
