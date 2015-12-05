@@ -101,7 +101,7 @@ class DNSRequestHandler(SocketServer.BaseRequestHandler):
                                 # Unable to open file
                                 self.request.sendall(SERVICE_UNAVAILABLE_STR)
                         else:
-                            self.request.sendall(OK_STR)
+                            self.request.sendall(NOT_FOUND_STR)
                         self.server.file_io_lock.release()
 
                 elif parts[1] == "BROWSE":
@@ -111,14 +111,17 @@ class DNSRequestHandler(SocketServer.BaseRequestHandler):
                             matching, unmatching = None, None
                             with open(self.server.file_name, "r") as file:
                                 matching, unmatching = self.filter_file(file)
-                            self.request.sendall(OK_STR)
-                            for i in xrange(0, len(matching)):
-                                self.request.sendall(matching[i])
+                            if len(matching) == 0:
+                                self.request.sendall(NOT_FOUND_STR)
+                            else:
+                                self.request.sendall(OK_STR)
+                                for i in xrange(0, len(matching)):
+                                    self.request.sendall(matching[i])
                         except IOError:
                             # Unable to open file
                             self.request.sendall(SERVICE_UNAVAILABLE_STR)
                     else:
-                        self.request.sendall(OK_STR)
+                        self.request.sendall(NOT_FOUND_STR)
                     self.server.file_io_lock.release()
 
                 else:

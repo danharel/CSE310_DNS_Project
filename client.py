@@ -11,14 +11,19 @@ ERROR_STR = "ERROR"
 
 NOT_CONNECTED_STR = "Not connected to a name server. Please enter the type of the server you'd like to connect to."
 
-PUT_USAGE_STR = '    put <name> <value> <type>\n'
-GET_USAGE_STR = '    get <name> <type>\n'
-DEL_USAGE_STR = '    del <name> <type>\n'
+PUT_USAGE_STR = '    put <name> <value>\n'
+GET_USAGE_STR = '    get <name>\n'
+DEL_USAGE_STR = '    del <name>\n'
+TYPE_USAGE_STR = '    type <type>\n'
 
 HELP_STR = ''
 HELP_STR += 'Commands:\n'
 HELP_STR += '    help\n'
 HELP_STR += '        Prints out this help menu.\n'
+HELP_STR += TYPE_USAGE_STR
+HELP_STR += '        Connects to the specified type DNS server.\n'
+HELP_STR += '    done\n'
+HELP_STR += '        Disconnects from the connected type DNS server.\n'
 HELP_STR += PUT_USAGE_STR
 HELP_STR += '        Adds a new name record to the database.\n'
 HELP_STR += '        If the name record is already in the database, the value will be replaced with the new value.\n'
@@ -185,6 +190,8 @@ class DNSClient(cmd.Cmd):
             print "Name Type Value"
             for i in xrange(1, len(lines)):
                 print lines[i].strip()
+        elif response_code == NOT_FOUND:
+            print "Database is empty."
         elif response_code == BAD_REQUEST:
             print "Invalid BROWSE request."
         elif response_code == SERVICE_UNAVAILABLE:
