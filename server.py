@@ -1,3 +1,4 @@
+import ip_address
 import os.path
 import SocketServer
 from ThreadedTCPServer import *
@@ -159,7 +160,7 @@ class DNSRequestHandler(SocketServer.BaseRequestHandler):
 
 def start_dns_server(file_name):
     # Assign the ephemeral port to the server
-    HOST, PORT = '', 0
+    HOST, PORT = ip_address.get(), 0
 
     server = ThreadedTCPServer((HOST, PORT), DNSRequestHandler)
     server.file_name = file_name
