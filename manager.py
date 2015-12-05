@@ -1,5 +1,6 @@
-import os.path
+import ip_address
 from multiprocessing import Process, Queue
+import os.path
 from server import DNSRequestHandler, start_dns_server
 import socket
 import SocketServer
@@ -61,7 +62,6 @@ def main():
                     p = threading.Thread(target=start_dns_server_process, args=(address_queue,type,))
                     p.start()
                     address = address_queue.get()
-                    #address = (socket.gethostbyname(address[0]), address[1])
                     server_addresses[type] = address
             success = True
     except IOError:
@@ -69,7 +69,7 @@ def main():
 
     if success:
         # Assign the ephemeral port to the server
-        HOST, PORT = '', 4254
+        HOST, PORT = ip_address.get(), 4254
 
         server = ThreadedTCPServer((HOST, PORT), ManagerRequestHandler)
 
