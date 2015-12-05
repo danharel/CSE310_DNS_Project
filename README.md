@@ -90,3 +90,73 @@ Status Code | Status Phrase       | Description
 400         | Bad Request         | Request message not understood by server.
 404         | Not Found           | Requested record not found on this server.
 503         | Service Unavailable | Server is currently unavailable to handle the request.
+
+## User Documentation
+
+### Dependencies
+
+The program uses Python 2.7.
+
+### Running the program
+
+First navigate to the directory containing the program files.
+Start the manager by typing
+``` plaintext
+$ python manager.py
+```
+once the manager has started running, in a separate command line instance, you must then open the client by typing
+``` plaintext
+$ python client.py
+```
+From here you can begin interfacing with the DNS program.
+
+### Commands
+
+* help
+  * Prints out the help menu
+* put _name_ _value_
+  * Inserts a record stored in the nameserver with the given name and value.
+  * Only usable when connected to a name server.
+* get _name_
+  * Prints out the name, type, and value of the record in the nameserver with the given name
+  * Only usable when connected to a name server.
+* del _name_
+  * Removes the record in the nameserver with the given name.
+  * Only usable when connected to a name server.
+* browse
+  * Prints out all records in the nameserver.
+  * Only usable when connected to a name server.
+* done
+  * Closes the current connection with the nameserver and allows you to start a new connection.
+  * Entries that are currently in the nameserver will persist.
+  * Only usable when connected to a name server.
+*type _type_
+  * Establishes a connection with the name server corresponding to the given type.
+  * only usable when not connected to a name server.
+
+### Expected Output (Ehh I'll do this later )
+
+* help
+  ```
+  
+  ```
+* put 
+  * If successful
+
+### Limitations
+
+None known
+
+## System Documentation
+
+### Command line arguments
+
+The client uses the Python module argparse to handle command line arguments.
+Command line argument defintions are placed at the beginning of the main() function.
+Further documentation can be found [here](https://docs.python.org/3/library/argparse.html).
+
+### Adding user commands to the client
+
+The client uses the Python module Cmd to handle user input.
+User commands are defined by methods that begin with "do_[command]", with the command arguments passed in as the second parameter.
+Further documentation can be found [here](https://docs.python.org/3/library/cmd.html).
