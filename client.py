@@ -103,7 +103,7 @@ class DNSClient(cmd.Cmd):
             print 'Invalid format'
             print PUT_USAGE_STR
         else:
-            message = PROTOCOL + " PUT " + parts[0] + " " + self.server_type + " " + parts[2]
+            message = PROTOCOL + " PUT " + parts[0] + " " + self.server_type + " " + parts[1]
             self.sock.sendall(message)
             response, lines = self.receive_response()
             if not self.validate_response(response):
@@ -123,7 +123,7 @@ class DNSClient(cmd.Cmd):
             return
 
         parts = args.split(' ')
-        if len(parts) != 2:
+        if len(parts) != 1:
             print 'Invalid format'
             print GET_USAGE_STR
         else:
@@ -150,7 +150,7 @@ class DNSClient(cmd.Cmd):
             return
 
         parts = args.split(' ')
-        if len(parts) != 2:
+        if len(parts) != 1:
             print 'Invalid format'
             print DEL_USAGE_STR
         else:

@@ -56,7 +56,8 @@ def main():
             for line in file:
                 type = line.strip().upper()
                 if type != "" not in server_addresses: # Ignore repeat types
-                    p = Process(target=start_dns_server_process, args=(address_queue,type,))
+                    #p = Process(target=start_dns_server_process, args=(address_queue,type,))
+                    p = threading.Thread(target=start_dns_server_process, args=(address_queue,type,))
                     p.start()
                     address = address_queue.get()
                     server_addresses[type] = address
