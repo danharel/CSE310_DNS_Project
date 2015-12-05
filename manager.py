@@ -16,6 +16,8 @@ class ManagerRequestHandler(SocketServer.BaseRequestHandler):
     def handle(self):
         data = self.request.recv(1024)
         while data:
+            print "Received data"
+            print data
             bad_request = False
             parts = data.strip().split(" ")
             if len(parts) < 2:
@@ -24,12 +26,14 @@ class ManagerRequestHandler(SocketServer.BaseRequestHandler):
                 if parts[1] == "TYPE":
                     if len(parts) < 3:
                         bad_request = True
-                    elif parts[2] in server_addresses:
-                        address = server_addresses[parts[2]]
-                        self.request.sendall(OK_STR)
-                        self.request.sendall("{} {}\r\n".format(address[0], address[1]))
                     else:
-                        bad_request = True
+                        type = parts[2].upper()
+                        if type in server_addresses:
+                            address = server_addresses[type]
+                            self.request.sendall(OK_STR)
+                            self.request.sendall("{} {}\r\n".format(address[0], address[1]))
+                        else:
+                            self.request.sendall(NOT_FOUND_STR)
                 else:
                     bad_request = True
             else:
@@ -37,11 +41,12 @@ class ManagerRequestHandler(SocketServer.BaseRequestHandler):
             if bad_request:
                 self.request.sendall(BAD_REQUEST_STR)
             self.request.sendall("\r\n")
+            data = self.request.recv(1024)
 
-def start_dns_server_process(address_queue):
-    address = start_dns_server()
-    print "DNS Server started at {0}:{1}".format(address[0], address[1])
-    address_queue.put(start_dns_server())
+def start_dns_server_process(address_queue, type):
+    address = start_dns_server("{}.txt".format(type))
+    print "{} DNS Server started at {}:{}".format(type, address[0], address[1])
+    address_queue.put(address)
 
 def main():
     address_queue = Queue()
@@ -49,9 +54,9 @@ def main():
     try:
         with open(FILE_NAME, "r") as file:
             for line in file:
-                type = line.strip()
-                if  type != "" not in server_addresses: # Ignore repeat types
-                    p = Process(target=start_dns_server_process, args=(address_queue,))
+                type = line.strip().upper()
+                if type != "" not in server_addresses: # Ignore repeat types
+                    p = Process(target=start_dns_server_process, args=(address_queue,type,))
                     p.start()
                     address = address_queue.get()
                     server_addresses[type] = address
