@@ -36,7 +36,7 @@
 
 ## Known Issues
 
-* None
+* 
 
 ## Storage
 
@@ -160,3 +160,24 @@ Further documentation can be found [here](https://docs.python.org/3/library/argp
 The client uses the Python module Cmd to handle user input.
 User commands are defined by methods that begin with "do_[command]", with the command arguments passed in as the second parameter.
 Further documentation can be found [here](https://docs.python.org/3/library/cmd.html).
+
+### Concurent operation handling
+
+Concurrency is used in order to allow multiple users to use the application at the same time. Concurrency is implemented in all locations using multithreading.
+It's used in the following locations:
++ manager.py
+  + Allows multiple instances of the manager to be running simultaneously.
++ server.py
+  + Allows multiple instances of each name server to be running simultaneously.
+
+### Major data structures
+
+The list of active name servers is stored in manager.py using a dictionary. It maps the server type to a 2-tuple containing the hostname and the port number of the server.
+
+### Client architecture
+
+The client keeps track of two sockets: the current socket that the client is communicating with and the manager socket. The "current" socket may be the manager socket at times.
+The "current" socket is stored as the _sock_ variable in DNSClient. The manager sock is stored in _manager\_sock_ variable.
+
+### Manager architecture
+
