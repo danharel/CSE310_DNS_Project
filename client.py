@@ -70,7 +70,6 @@ class DNSClient(cmd.Cmd):
 
         print "Hello"
 
-        self.connected_to_nameserver = False
         self.server_type = None
 
         try:
@@ -96,7 +95,7 @@ class DNSClient(cmd.Cmd):
 
     # Puts an entry into the database
     def do_put(self, args):
-        if not self.connected_to_nameserver:
+        if not self.server_type:
             print NOT_CONNECTED_STR
             return
 
@@ -105,7 +104,7 @@ class DNSClient(cmd.Cmd):
             print 'Invalid format'
             print PUT_USAGE_STR
         else:
-            message = PROTOCOL + " PUT " + parts[0] + " " + selfserver_type + " " + parts[2]
+            message = PROTOCOL + " PUT " + parts[0] + " " + self.server_type + " " + parts[2]
             self.sock.sendall(message)
             response, lines = self.receive_response()
             if not self.validate_response(response):
@@ -120,7 +119,7 @@ class DNSClient(cmd.Cmd):
 
     # Gets an entry from the database
     def do_get(self, args):
-        if not self.connected_to_nameserver:
+        if not self.server_type:
             print NOT_CONNECTED_STR
             return
 
@@ -147,7 +146,7 @@ class DNSClient(cmd.Cmd):
 
     # Deletes an entry from the database
     def do_del(self, args):
-        if not self.connected_to_nameserver:
+        if not self.server_type:
             print NOT_CONNECTED_STR
             return
 
@@ -173,7 +172,7 @@ class DNSClient(cmd.Cmd):
 
     # Prints out all entries
     def do_browse(self, args):
-        if not self.connected_to_nameserver:
+        if not self.server_type:
             print NOT_CONNECTED_STR
             return
 
@@ -194,7 +193,7 @@ class DNSClient(cmd.Cmd):
 
     # Contacts the manager for the address to the given nameserver, then connects to it
     def do_type(self, args):
-        if self.connected_to_nameserver:
+        if self.server_type:
             print 'You are already connected to a name server. Type "done" if you are done with this type.'
             return
 
@@ -219,7 +218,6 @@ class DNSClient(cmd.Cmd):
                 connected = self.connect_to_nameserver(server_host, server_port)
                 if connected:
                     print "Connection established with %s nameserver" % (server_type)
-                    self.connected_to_nameserver = True
                     self.server_type = server_type
                 else:
                     print "Unable to connect to nameserver. Please try again."
@@ -232,7 +230,7 @@ class DNSClient(cmd.Cmd):
 
     # Closes connection with the current name server and allows the user to connect to request a new name server
     def do_done(self, args):
-        if !self.connected_to_nameserver:
+        if not self.server_type:
             print NOT_CONNECTED_STR
             return
 
@@ -241,12 +239,12 @@ class DNSClient(cmd.Cmd):
 
         print "Connection with nameserver has been closed."
 
-        self.connected_to_nameserver = False
+        self.server_type = None
 
     # Exits the client
     def do_exit(self, args):
         self.manager_sock.close()
-        if self.connected_to_nameserver:
+        if self.server_type:
             self.sock.close()
         return True
 
