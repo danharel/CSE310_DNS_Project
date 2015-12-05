@@ -181,3 +181,146 @@ The "current" socket is stored as the _sock_ variable in DNSClient. The manager 
 
 ### Manager architecture
 
+## Testing
+
+### Assumptions
+
+Unless otherwise stated, the following assumptions are made for each test case:
++There is a _manager.in_ file with the following entries:
+  ```
+  A
+  NS
+  CNAME
+  ```
++The manager is running in a separate terminal window or background process, binded to hostname _hostname_ and port _port_.
++Each name server is emptied at the end of each test case. This assures that each test case can be run independently, and that the success or failure of the previous test does not affect the next test.
++All running clients are closed at the end with the "exit" command.
+
+### Test PUT
+
+#### Input
+
+```
+$ python client.py _hostname_ _port_
+> type A
+> put example.com 1.2.3.4
+> put example2.com 5.5.5.5
+> put example3.com 100.100.100.100
+> put example.com 2.2.2.2
+> browse
+```
+
+#### Expected output
+
+```
+Name Type Value
+example2.com a 5.5.5.5
+example3.com a 100.100.100.100
+example.com a 2.2.2.2
+```
+
+#### Explanation
+
+By inserting records then using "browse", we can see that they were correctly inserted. We can also see that we can use the PUT command to change the value of a record.
+
+### Test GET
+
+#### Input
+
+```
+$ python client.py _hostname_ _port_
+> type A
+> put example.com 1.1.1.1
+> put example2.com 2.2.2.2
+> put example3.com 3.3.3.3
+> get example2.com
+```
+
+#### Expected output
+
+```
+Name Type Value
+example3.com a 3.3.3.3
+```
+
+#### Explaination
+
+This shows that an entry's value can be retreived, regardless of how many entries have been placed before or after the requested entry.
+
+### Test DEL
+
+#### Input
+
+```
+$ python client.py _hostname_ _port_
+> type A
+> put example.com 1.1.1.1
+> put example2.com 2.2.2.2
+> put example3.com 3.3.3.3
+> del example2.com
+> browse
+```
+
+#### Expected output
+
+```
+Name Type Value
+example.com a 1.1.1.1
+example3.com a 3.3.3.3
+```
+
+#### Explaination
+
+This shows that an entry's value can be deleted, regardless of how many entries have been placed before or after the requested entry.
+
+### Test manager concurrency
+
+#### Input
+
+```
+$ python client.py _hostname_ _port_
+Open new terminal window
+$ python client.py _hostname_ _port_
+> type A
+Open the first terminal window
+> type NS
+```
+
+#### Expected output
+
+The second and third windows should both say `Connection established with nameserver`. 
+
+#### Explaination
+By opening two connections at the same time, we see that both connections can still be used, and that the existance of one connection does not affect the others.
+
+### Test client concurrency
+
+#### Input
+
+```
+$ python client.py _hostname_ _port_
+Open new terminal window
+$ python client.py _hostname_ _port_
+> type A
+Open the first terminal window
+> type A
+> put example.com 1.1.1.1
+Open the second terminal window
+> put example2.com 2.2.2.2
+> browse
+Open the first terminal
+> browse
+```
+
+#### Expected output
+
+Both clients should output the following:
+```
+Name Type Value
+example.com a 1.1.1.1
+example2.com a 2.2.2.2
+```
+
+#### Explaination
+
+This shows that both clients can communicate with the same name server at the same time without affecting the other connection, and also receive the same output.
