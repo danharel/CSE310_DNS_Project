@@ -17,7 +17,7 @@ class DNSRequestHandler(SocketServer.BaseRequestHandler):
     def handle(self):
         data = self.request.recv(1024)
         while data:
-            print "Received data: {}".format(data)
+            print "Received: {}".format(data)
 
             parts = data.strip().split(" ")
             # Valid requests are in the following format:

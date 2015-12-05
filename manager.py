@@ -17,6 +17,8 @@ class ManagerRequestHandler(SocketServer.BaseRequestHandler):
     def handle(self):
         data = self.request.recv(1024)
         while data:
+            print "Received: {}".format(data)
+
             bad_request = False
             parts = data.strip().split(" ")
             if len(parts) < 2:
